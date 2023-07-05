@@ -126,13 +126,13 @@ def load_data(molecule, basis, dest_csv_path, raw_tot_data_path, raw_elec_data_p
 
 
 def get_hessian():
-    if os.path.isfile('hessian_PBE0.txt'):
-        H = np.loadtxt('hessian_PBE0.txt')
+    if os.path.isfile('CCS_basis/hessian_PBE0.txt'):
+        H = np.loadtxt('CCS_basis/hessian_PBE0.txt')
     else:
         C_idxs = [0, 1, 2, 3, 4, 5]
         mol_ap = AP(mol_DFT, sites=C_idxs)
         H = mol_ap.build_hessian()
-        np.savetxt('hessian_PBE0.txt', H)
+        np.savetxt('CCS_basis/hessian_PBE0.txt', H)
     return H
 
 
@@ -143,9 +143,10 @@ def get_inv_dist_M(coord):
         for j in range(6):
             if i != j:
                 r_ij = np.linalg.norm(coord[i] - coord[j])  # Calculate Euclidean distance between i-th and j-th rows of coord
+                M[i, j] = 1/(r_ij + 1e-8)
             else:
-                r_ij = 1 # for diagonal elements, set z_ij to 1
-            M[i, j] = 1/(r_ij + 1e-8)
+                M[i, j] = 0.5 * (2.4)**2 * 6**0.4
+            
     return M
 
 
@@ -188,6 +189,7 @@ def lexi_transformation_2d(arr):
         transformed_row = lexi_transformation(row)
         transformed_arr.append(transformed_row)
     return np.array(transformed_arr)
+
 
 
 def sort_by_norm(c, coord):
@@ -239,8 +241,10 @@ def generate_coef_with_specific_basis(molecule_energy_data, basis_matrix, coord,
 
     # Compute the c array, which represents the ANM coordinates
     c_array = (basis_matrix @ dx_array.T).T
+    c_inv_array = (np.linalg.inv(basis_matrix) @ dx_array.T).T
     sorted_c_array = (basis_matrix @ sorted_dx_array.T).T
     lexi_c_array = (basis_matrix @ lexi_dx_array.T).T
+    lexi_c_inv_array = (np.linalg.inv(basis_matrix) @ lexi_dx_array.T).T
 
     # Append the data onto the dataframe
     data_with_specific_basis['dx'] = dx_array.tolist()
@@ -248,13 +252,15 @@ def generate_coef_with_specific_basis(molecule_energy_data, basis_matrix, coord,
     data_with_specific_basis['lexi_dx'] = lexi_dx_array.tolist()
 
     data_with_specific_basis['c'] = c_array.tolist()
+    data_with_specific_basis['c_inv'] = c_inv_array.tolist()
     data_with_specific_basis['sorted_c'] = sorted_c_array.tolist()
     data_with_specific_basis['lexi_c'] = lexi_c_array.tolist()
+    data_with_specific_basis['lexi_c_inv'] = lexi_c_inv_array.tolist()
     data_with_specific_basis['coulomb_sort_c'] = data_with_specific_basis['c'].apply(lambda c: sort_by_norm(c, coord).tolist())
     data_with_specific_basis['num_dope'] = data_with_specific_basis['dx'].apply(lambda my_list: sum(1 for elem in my_list if elem != 0))
 
     dx_columns = ['dx', 'sorted_dx', 'lexi_dx', 'num_dope']
-    c_columns = ['c', 'sorted_c', 'lexi_c', 'coulomb_sort_c']
+    c_columns = ['c', 'c_inv', 'sorted_c', 'lexi_c', 'lexi_c_inv', 'coulomb_sort_c']
     return data_with_specific_basis, dx_columns, c_columns
 
 
@@ -262,20 +268,33 @@ def generate_coef_with_specific_basis(molecule_energy_data, basis_matrix, coord,
 def generate_input_training_data(molecule_data):
     columns = [f"coord{i}" for i in range(6)]
     X = pd.DataFrame(columns=columns)
+    X_inv = pd.DataFrame(columns=columns)
     X_sorted = pd.DataFrame(columns=columns)
     X_lexi = pd.DataFrame(columns=columns)
+    X_lexi_inv = pd.DataFrame(columns=columns)
     X_coulomb = pd.DataFrame(columns=columns)
+    X_square_eig = pd.DataFrame(columns=columns)
+    X_inv_square_eig = pd.DataFrame(columns=columns)
+    X_lexi_square_eig = pd.DataFrame(columns=columns)
+    X_lexi_inv_square_eig = pd.DataFrame(columns=columns)
+    
     num_dope = molecule_data['num_dope']
 
     for i in range(6):
-        X[f"coord{i}"] = molecule_data['c'].apply(lambda x: x[i] * 10)
-        X_sorted[f"coord{i}"] = molecule_data['sorted_c'].apply(lambda x: x[i] * 10)
-        X_lexi[f"coord{i}"] = molecule_data['lexi_c'].apply(lambda x: x[i] * 10)
-        X_coulomb[f"coord{i}"] = molecule_data['coulomb_sort_c'].apply(lambda x: x[i] * 10)
+        X[f"coord{i}"] = molecule_data['c'].apply(lambda x: x[i]*10)
+        X_inv[f"coord{i}"] = molecule_data['c_inv'].apply(lambda x: x[i]*10)
+        X_sorted[f"coord{i}"] = molecule_data['sorted_c'].apply(lambda x: x[i]*10)
+        X_lexi[f"coord{i}"] = molecule_data['lexi_c'].apply(lambda x: x[i]*10)
+        X_lexi_inv[f"coord{i}"] = molecule_data['lexi_c_inv'].apply(lambda x: x[i]*10)
+        X_coulomb[f"coord{i}"] = molecule_data['coulomb_sort_c'].apply(lambda x: x[i]*10)
+        X_square_eig[f"coord{i}"] = molecule_data['c_square_eig'].apply(lambda x: x[i]*10)
+        X_inv_square_eig[f"coord{i}"] = molecule_data['c_inv_square_eig'].apply(lambda x: x[i]*10)
+        X_lexi_square_eig[f"coord{i}"] = molecule_data['lexi_c_square_eig'].apply(lambda x: x[i]*10)
+        X_lexi_inv_square_eig[f"coord{i}"] = molecule_data['lexi_c_inv_square_eig'].apply(lambda x: x[i]*10)
 
     X_nd = pd.concat([X, num_dope.rename('num_dope')], axis=1)
     X_lexi_nd = pd.concat([X_lexi, num_dope.rename('num_dope')], axis=1)
-    datasets = [X, X_sorted, X_lexi, X_nd, X_lexi_nd, X_coulomb]
+    datasets = [X, X_inv, X_sorted, X_lexi, X_lexi_inv, X_nd, X_lexi_nd, X_coulomb, X_square_eig, X_inv_square_eig, X_lexi_square_eig, X_lexi_inv_square_eig]
     return datasets
 
 
@@ -289,7 +308,7 @@ def generate_target_training_data(molecule_data):
 
 
 
-def export_to_csv_custom(datasets, dataset_names, prefix):
+def export_to_csv_custom(datasets, dataset_names, prefix, dest_folder):
     for dataset, dataset_name in zip(datasets, dataset_names):
-        csv_filename = f"../Data/Benzene Training Data/[Benz] {prefix}_{dataset_name}.csv"  # Create the CSV file name
+        csv_filename = f"{dest_folder}/[Benz] {prefix}_{dataset_name}.csv"  # Create the CSV file name
         dataset.to_csv(csv_filename, index=False)  # Save the dataframe as CSV
