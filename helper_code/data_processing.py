@@ -312,3 +312,24 @@ def export_to_csv_custom(datasets, dataset_names, prefix, dest_folder):
     for dataset, dataset_name in zip(datasets, dataset_names):
         csv_filename = f"{dest_folder}/[Benz] {prefix}_{dataset_name}.csv"  # Create the CSV file name
         dataset.to_csv(csv_filename, index=False)  # Save the dataframe as CSV
+
+
+
+def compute_lambda_c_square(c_arr, eig_val_arr):
+    """ 
+    square each coefficient and multiply it by the ANM eigenvalue
+
+    Args:
+        c_arr (list): a list of the ANM coefficients
+        eig_val_arr (list): a list of the ANM eigenvalues
+    Returns:
+        list: the transformed coefficient
+    """
+    transformed_c = [eig_val * coef**2 for eig_val, coef in zip(eig_val_arr, c_arr)]
+    return transformed_c
+
+
+
+def compute_lambda_c(c_arr, eig_val_arr):
+    transformed_c = [eig_val * coef for eig_val, coef in zip(eig_val_arr, c_arr)]
+    return transformed_c
