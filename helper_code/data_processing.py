@@ -333,3 +333,13 @@ def compute_lambda_c_square(c_arr, eig_val_arr):
 def compute_lambda_c(c_arr, eig_val_arr):
     transformed_c = [-eig_val * coef for eig_val, coef in zip(eig_val_arr, c_arr)]
     return transformed_c
+
+
+def compute_CSEV(c_arr, eig_val_arr, Q):
+    length = len(c_arr)
+    transformed_c = [0] * length
+    for i in range(length):
+        eig_vec = Q[:, i]
+        norm_square = np.linalg.norm(eig_vec)**2
+        transformed_c[i] = -eig_val_arr[i] * c_arr[i]**2 * norm_square
+    return transformed_c

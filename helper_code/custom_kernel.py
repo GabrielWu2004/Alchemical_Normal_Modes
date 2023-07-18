@@ -59,8 +59,8 @@ def vectorized_extended_gaussian_kernel(X, Y, params):
     Calculates the similarity between two vectors using an extended gaussian kernel.
     The kernel takes into account distance between vectors, norm difference, and angular difference
     Args:
-        x (numpy.ndarray): Input vector x.
-        y (numpy.ndarray): Input vector y.
+        X (numpy.ndarray): Input vector x.
+        Y (numpy.ndarray): Input vector y.
         params (dict): Dictionary of hyperparameters:
         - gamma (float): Hyperparameter for the distance term.
         - epsilon (float): Hyperparameter for the norm difference term.
@@ -84,6 +84,8 @@ def vectorized_extended_gaussian_kernel(X, Y, params):
 
     phi = np.exp(-gamma * (distance**2)/2 - epsilon * (np.subtract.outer(x_norm, y_norm))**2 - beta * (1 - cos_theta**2))
     return phi
+
+
 
 
 def vectorized_similarity_matrix(X_ref, X_query, similarity_kernel, params):
