@@ -325,11 +325,11 @@ def compute_lambda_c_square(c_arr, eig_val_arr):
     Returns:
         list: the transformed coefficient
     """
-    transformed_c = [eig_val * coef**2 for eig_val, coef in zip(eig_val_arr, c_arr)]
+    transformed_c = [-eig_val * coef**2 for eig_val, coef in zip(eig_val_arr, c_arr)]
     return transformed_c
 
 
 
 def compute_lambda_c(c_arr, eig_val_arr):
-    transformed_c = [eig_val * coef for eig_val, coef in zip(eig_val_arr, c_arr)]
+    transformed_c = [-eig_val * coef for eig_val, coef in zip(eig_val_arr, c_arr)]
     return transformed_c
