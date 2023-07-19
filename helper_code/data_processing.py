@@ -183,6 +183,33 @@ def lexi_transformation(arr):
 
 
 
+def coronene_lexi(arr, rotation_mapping, reflection_mapping1, reflection_mapping2):
+    ''' 
+    Lexi mapping specifically for Coronene
+    '''
+    all_rotation = [arr]
+    new_rotation = arr
+    while True:
+        new_rotation = [new_rotation[rotation_mapping[i]] for i in range(len(arr))]
+        if new_rotation == arr:
+            break
+        all_rotation.append(new_rotation)
+    
+    all_reflection = []
+    for rotation in all_rotation:
+        new_reflection1 = [rotation[reflection_mapping1[i]] for i in range(len(rotation))]
+        new_reflection2 = [rotation[reflection_mapping2[i]] for i in range(len(rotation))]
+        all_reflection.append(new_reflection1)
+        all_reflection.append(new_reflection2)
+
+    all_patterns = np.vstack((all_rotation, all_reflection))
+    sorted_indices = np.lexsort(all_patterns.T[::-1])
+    min_pattern = all_patterns[sorted_indices[0]]
+
+    return min_pattern
+
+
+
 def lexi_transformation_2d(arr):
     transformed_arr = []
     for row in arr:
