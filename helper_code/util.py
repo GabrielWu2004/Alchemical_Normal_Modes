@@ -1,6 +1,7 @@
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
+from QML_KernelRidge import KRR_local
 import numpy as np
 from custom_kernel import *
 
@@ -121,6 +122,27 @@ def evaluate_performance_vectorized_kernel(model, X, y, num_training_sample, num
     return average_error, std_dev_error
 
 
+
+def evaluate_performance_local(params, X, y, Q, num_training_sample, num_trials):
+
+    errors = []
+    test_size = 1.0 - num_training_sample/X.shape[0]
+
+    for i in range(num_trials):
+        train_indices, test_indices = train_test_split(range(X.shape[0]), test_size=test_size, shuffle=True, random_state=i)
+        X_train, X_test = X[train_indices], X[test_indices]
+        y_train, y_test = y[train_indices], y[test_indices]
+        Q_train, Q_test = Q[train_indices], Q[test_indices]
+        preds = KRR_local(X_train, Q_train, y_train, X_test, Q_test, best_params=params, kernel='Gaussian')
+        error = mean_absolute_error(preds.reshape(-1, 1), y_test)
+        errors.append(error)
+    
+    average_error = np.mean(errors)
+    std_dev_error = np.std(errors)/np.sqrt(num_trials)
+    return average_error, std_dev_error
+
+
+
 def generate_dx_arrays(num_dopant, num_mutant):
     mutations = np.zeros((num_mutant, 24), dtype=int)
     
@@ -137,6 +159,7 @@ def generate_dx_arrays(num_dopant, num_mutant):
     return mutations
 
 
+
 def convert_to_charge_array(dx_array):
     charge_array = dx_array + 6
     h_elements = np.full((charge_array.shape[0], 12), 1)
@@ -144,11 +167,13 @@ def convert_to_charge_array(dx_array):
     return concatenated_array
 
 
+
 def convert_to_string_array(dx_array):
     string_array = np.where(dx_array == 1, 'N', np.where(dx_array == -1, 'B', 'C'))
     h_elements = np.full((string_array.shape[0], 12), 'H')
     concatenated_array = np.concatenate((string_array, h_elements), axis=1)
     return concatenated_array
+
 
 
 def compress_string(lst):
@@ -169,8 +194,10 @@ def compress_string(lst):
     return compressed
 
 
+
 def compress_str_arrays(str_array):
     return [compress_string(str_arr.tolist()) for str_arr in str_array]
+
 
 
 def generate_mutant_str(num_dopant, num_mutant):
@@ -178,6 +205,7 @@ def generate_mutant_str(num_dopant, num_mutant):
     doped_str_arrays = convert_to_string_array(doped_dx_arrays)
     compressed_str_array = compress_str_arrays(doped_str_arrays)
     return compressed_str_array
+
 
 
 def charge_arr_to_str(charge_arr):
