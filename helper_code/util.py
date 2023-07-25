@@ -1,7 +1,7 @@
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
-from QML_KernelRidge import KRR_local
+from QML_KernelRidge import KRR_local, KRR_global
 import numpy as np
 from custom_kernel import *
 
@@ -115,6 +115,25 @@ def evaluate_performance_vectorized_kernel(model, X, y, num_training_sample, num
         prediction_matrix = vectorized_similarity_matrix(X_train, X_val, similarity_kernel, params)
         y_pred = model.predict(prediction_matrix.T)
         error = mean_absolute_error(y_val, y_pred) 
+        errors.append(error)
+    
+    average_error = np.mean(errors)
+    std_dev_error = np.std(errors)/np.sqrt(num_trials)
+    return average_error, std_dev_error
+
+
+
+def evaluate_performance_global(params, X, y, num_training_sample, num_trials):
+
+    errors = []
+    test_size = 1.0 - num_training_sample/X.shape[0]
+
+    for i in range(num_trials):
+        train_indices, test_indices = train_test_split(range(X.shape[0]), test_size=test_size, shuffle=True, random_state=i)
+        X_train, X_test = X[train_indices], X[test_indices]
+        y_train, y_test = y[train_indices], y[test_indices]
+        preds = KRR_global(X_train, y_train, X_test, best_params=params, kernel='Gaussian')
+        error = mean_absolute_error(preds.reshape(-1, 1), y_test)
         errors.append(error)
     
     average_error = np.mean(errors)
