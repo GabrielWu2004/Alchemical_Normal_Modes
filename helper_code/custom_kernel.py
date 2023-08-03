@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import numba
+import math
 
 def extended_gaussian_kernel(x, y, params):
     """
@@ -28,7 +29,6 @@ def extended_gaussian_kernel(x, y, params):
     phi = np.exp(-gamma*(distance**2)/2 - epsilon*(x_norm-y_norm)**2 - beta*(1-cos_theta**2))
     return phi
 
-@numba.jit(parallel=True, nopython=True)
 def create_similarity_matrix(X_ref, X_query, similarity_kernel, params):
     """
     Create a similarity matrix using a specified similarity kernel.
@@ -48,6 +48,53 @@ def create_similarity_matrix(X_ref, X_query, similarity_kernel, params):
         for j in numba.prange(b):
             similarity_matrix[i, j] = similarity_kernel(X_query[i], X_ref[j], params)
     return similarity_matrix
+
+
+@numba.jit(nopython=True)
+def extended_gaussian_kernel_nb(x, y, gamma, epsilon, beta):
+    x = np.ascontiguousarray(x)
+    y = np.ascontiguousarray(y)
+    x_norm = np.linalg.norm(x)
+    y_norm = np.linalg.norm(y)
+    dot_product = np.dot(x, y)
+    diff = x - y
+    distance = np.linalg.norm(diff)
+    cos_theta = dot_product / (x_norm*y_norm)
+    phi = math.exp(-gamma*(distance**2)/2 - epsilon*(x_norm-y_norm)**2 - beta*(1-cos_theta))
+    return phi
+
+@numba.jit(parallel=True, nopython=True)
+def create_similarity_matrix_nb(X_ref, X_query, similarity_kernel, gamma, epsilon, beta):
+    a, b = len(X_query), len(X_ref)
+    similarity_matrix = np.zeros((a, b))
+    for i in numba.prange(a):
+        for j in numba.prange(b):
+            similarity_matrix[i, j] = similarity_kernel(X_query[i], X_ref[j], gamma, epsilon, beta)
+    return similarity_matrix
+
+
+@numba.jit(nopython=True)
+def extended_gaussian_kernel_v2(x, y, gamma, epsilon, beta):
+    x = np.ascontiguousarray(x)
+    y = np.ascontiguousarray(y)
+    x_norm = np.linalg.norm(x)
+    y_norm = np.linalg.norm(y)
+    dot_product = np.dot(x, y)
+    diff = x - y
+    distance = np.linalg.norm(diff)
+    cos_theta = dot_product / (x_norm*y_norm)
+    phi = math.exp(-gamma*(distance**4)/2 - epsilon*(x_norm-y_norm)**2 - beta*(1-cos_theta))
+    return phi
+
+@numba.jit(parallel=True, nopython=True)
+def create_similarity_matrix_v2(X_ref, X_query, similarity_kernel, gamma, epsilon, beta):
+    a, b = len(X_query), len(X_ref)
+    similarity_matrix = np.zeros((a, b))
+    for i in numba.prange(a):
+        for j in numba.prange(b):
+            similarity_matrix[i, j] = similarity_kernel(X_query[i], X_ref[j], gamma, epsilon, beta)
+    return similarity_matrix
+
 
 
 def vectorized_extended_gaussian_kernel(X, Y, params):
