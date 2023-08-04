@@ -67,10 +67,12 @@ def evaluate_performance_custom_kernel(model, X, y, num_training_sample, num_tri
         y_train = y_train.to_numpy()
         X_val = X_val.to_numpy()
         y_val = y_val.to_numpy()
-
-        similarity_matrix = create_similarity_matrix(X_train, X_train, similarity_kernel, params)
+        beta = params['beta']
+        epsilon = params['epsilon']
+        gamma = params['gamma']
+        similarity_matrix = create_similarity_matrix_nb(X_train, X_train, similarity_kernel, beta, epsilon, gamma)
         model.fit(similarity_matrix, y_train)
-        prediction_matrix = create_similarity_matrix(X_train, X_val, similarity_kernel, params)
+        prediction_matrix = create_similarity_matrix_nb(X_train, X_val, similarity_kernel, beta, epsilon, gamma)
         y_pred = model.predict(prediction_matrix)
         error = mean_absolute_error(y_val, y_pred) 
         errors.append(error)
