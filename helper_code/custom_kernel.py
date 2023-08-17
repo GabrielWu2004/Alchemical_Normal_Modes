@@ -59,7 +59,7 @@ def extended_gaussian_kernel_nb(x, y, gamma, epsilon, beta):
     dot_product = np.dot(x, y)
     diff = x - y
     distance = np.linalg.norm(diff)
-    cos_theta = dot_product / (x_norm*y_norm)
+    cos_theta = dot_product / ((x_norm*y_norm)+1e-8)
     phi = math.exp(-gamma*(distance**2)/2 - epsilon*(x_norm-y_norm)**2 - beta*(1-cos_theta))
     return phi
 

@@ -186,6 +186,7 @@ def lexi_transformation(arr):
 def coronene_lexi(arr, rotation_mapping, reflection_mapping1, reflection_mapping2):
     ''' 
     Lexi mapping specifically for Coronene
+    This function only works for python list, not numpy array 
     '''
     all_rotation = [arr]
     new_rotation = arr
