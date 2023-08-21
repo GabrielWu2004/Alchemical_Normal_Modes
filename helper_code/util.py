@@ -1,7 +1,7 @@
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
-# from QML_KernelRidge import KRR_local, KRR_global
+from QML_KernelRidge import KRR_local, KRR_global
 import numpy as np
 from custom_kernel import create_similarity_matrix_nb, extended_gaussian_kernel_nb
 
