@@ -5,6 +5,7 @@ from QML_KernelRidge import KRR_local, KRR_global
 import numpy as np
 from custom_kernel import create_similarity_matrix_nb, extended_gaussian_kernel_nb
 
+
 def evaluate_performance(model, X, y, num_training_sample, num_trials):
 
     """ 
