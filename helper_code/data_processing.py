@@ -137,15 +137,16 @@ def get_hessian():
 
 
 
-def get_inv_dist_M(coord):
-    M = np.zeros((6, 6))
-    for i in range(6):
-        for j in range(6):
+def get_inv_dist_M(coord, num_mol):
+    M = np.zeros((num_mol, num_mol))
+    for i in range(num_mol):
+        for j in range(num_mol):
             if i != j:
                 r_ij = np.linalg.norm(coord[i] - coord[j])  # Calculate Euclidean distance between i-th and j-th rows of coord
                 M[i, j] = 1/(r_ij + 1e-8)
             else:
-                M[i, j] = 0.5 * (2.4)**2 * 6**0.4
+                M[i, j] = 1
+                # M[i, j] = 0.5 * (2.4)**2 * 6**0.4
             
     return M
 
