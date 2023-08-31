@@ -167,7 +167,7 @@ def evaluate_performance_local(params, X, y, Q, num_training_sample, num_trials)
 def evaluate_performance_local_v2(params, X, y, Q, train_size, num_trials, test_size=400):
     errors = []
     for i in range(num_trials):
-        shuffled_indices = shuffle(np.arange(len(X)), random_state=42)
+        shuffled_indices = shuffle(np.arange(len(X)), random_state=i)
         X, y, Q = X[shuffled_indices], y[shuffled_indices], Q[shuffled_indices]
         X_train, X_test = X[:train_size], X[-test_size:]
         y_train, y_test = y[:train_size], y[-test_size:]
